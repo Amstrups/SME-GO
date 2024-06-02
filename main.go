@@ -57,6 +57,11 @@ func (c *ChannelCluster) CloseWrites() {
 	close(c.pOut)
 }
 
+func (c *ChannelCluster) CloseReads() {
+	close(c.sIn)
+	close(c.pIn)
+}
+
 func (c *ChannelCluster) ForwardTo(ch wlvChan, wg *sync.WaitGroup) {
 	wg.Add(2)
 	// read public outs
@@ -158,26 +163,38 @@ func main() {
 
 	go func() {
 		defer wg.Done()
-		SME(foo, cc.ins, cc.outs)
+		SME(baa, cc.ins, cc.outs)
+		cc.CloseWrites()
 	}()
 
 	go func() {
 		defer wg.Done()
-		foo_inputs(cc.sIn, cc.pIn)
-		close(cc.pIn)
-		close(cc.sIn)
+		baa_inputs(cc.sIn, cc.pIn)
+		cc.CloseReads()
 	}()
 
 	go func() {
 		defer wg.Done()
-		x := <-cc.pOut
-		fmt.Println("Public:", x)
+		for {
+			v, ok := <-cc.pOut
+			if !ok {
+				return
+			}
+
+			fmt.Println("Public:", v)
+		}
 	}()
 
 	go func() {
 		defer wg.Done()
-		x := <-cc.sOut
-		fmt.Println("Secret:", x)
+		for {
+			v, ok := <-cc.sOut
+			if !ok {
+				return
+			}
+
+			fmt.Println("Secret:", v)
+		}
 	}()
 
 	wg.Wait()
@@ -193,4 +210,18 @@ func foo(ins ReadChannels, outs WriteChannels) {
 func foo_inputs(sIn, _ lvChan) {
 	fmt.Println("writing 12 to sec")
 	sIn <- 12
+}
+
+func baa(ins ReadChannels, outs WriteChannels) {
+	x := <-ins[SECRET]
+	fmt.Println(x)
+
+	outs[PUBLIC] <- x
+	outs[SECRET] <- x
+}
+
+func baa_inputs(sIn, pIn lvChan) {
+	fmt.Println("writing 12 to sec")
+	sIn <- 12
+	pIn <- 10
 }
