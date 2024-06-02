@@ -9,8 +9,8 @@ import (
 
 // SME-GO Function
 func SME(f e.F, ins t.ReadChannels, outs t.WriteChannels) {
-	highCluster := t.CreateCluster()
-	lowCluster := t.CreateCluster()
+	highExec := t.CreateCluster()
+	lowExec := t.CreateCluster()
 
 	var wg sync.WaitGroup
 
@@ -18,15 +18,15 @@ func SME(f e.F, ins t.ReadChannels, outs t.WriteChannels) {
 	//low execution
 	go func() {
 		defer wg.Done()
-		f(lowCluster.GetChannels())
-		lowCluster.CloseWrites()
+		f(lowExec.GetChannels())
+		lowExec.CloseWrites()
 	}()
 
 	//high execution
 	go func() {
 		defer wg.Done()
-		f(highCluster.GetChannels())
-		highCluster.CloseWrites()
+		f(highExec.GetChannels())
+		highExec.CloseWrites()
 	}()
 
 	wg.Add(2)
@@ -39,8 +39,8 @@ func SME(f e.F, ins t.ReadChannels, outs t.WriteChannels) {
 				return
 			}
 
-			highCluster.S_IN <- 0 // changed to constant
-			lowCluster.S_IN <- v
+			lowExec.S_IN <- 0 // change to constant for low exec
+			highExec.S_IN <- v
 		}
 	}()
 
@@ -53,13 +53,13 @@ func SME(f e.F, ins t.ReadChannels, outs t.WriteChannels) {
 				return
 			}
 
-			highCluster.P_IN <- v
-			lowCluster.P_IN <- v
+			lowExec.P_IN <- v
+			highExec.P_IN <- v
 		}
 	}()
 
-	lowCluster.ForwardTo(outs[t.SECRET], &wg)
-	highCluster.ForwardTo(outs[t.PUBLIC], &wg)
+	lowExec.ForwardTo(outs[t.SECRET], &wg)
+	highExec.ForwardTo(outs[t.PUBLIC], &wg)
 
 	wg.Wait()
 }
