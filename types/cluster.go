@@ -43,17 +43,17 @@ func (c *ChannelCluster) CloseReads() {
 	close(c.P_IN)
 }
 
-func (c *ChannelCluster) ForwardTo(ch WriteChan, wg *sync.WaitGroup) {
+func (c *ChannelCluster) Forward(to WriteChan, from, discard Chan, wg *sync.WaitGroup) {
 	wg.Add(2)
 	// read public outs
 	go func() {
 		defer wg.Done()
 		for {
-			v, ok := <-c.P_OUT
+			v, ok := <-from
 			if !ok {
 				return
 			}
-			ch <- v
+			to <- v
 		}
 	}()
 
@@ -61,11 +61,11 @@ func (c *ChannelCluster) ForwardTo(ch WriteChan, wg *sync.WaitGroup) {
 	go func() {
 		defer wg.Done()
 		for {
-			v, ok := <-c.S_OUT
+			_, ok := <-discard
 			if !ok {
 				return
 			}
-			ch <- v
+
 		}
 	}()
 }

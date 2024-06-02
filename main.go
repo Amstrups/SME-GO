@@ -5,7 +5,6 @@ import (
 	t "SME-GO/types"
 	"fmt"
 	"sync"
-	"time"
 )
 
 // SME-GO Function
@@ -67,8 +66,8 @@ func SME(f e.F, ins t.ReadChannels, outs t.WriteChannels) {
 	}()
 
 	// handle outputs from f
-	go lowExec.ForwardTo(outs[t.SECRET], &wg)
-	go highExec.ForwardTo(outs[t.PUBLIC], &wg)
+	go lowExec.Forward(outs[t.PUBLIC], lowExec.P_OUT, lowExec.S_OUT, &wg)
+	go highExec.Forward(outs[t.SECRET], highExec.S_OUT, highExec.P_OUT, &wg)
 
 	wg.Wait()
 }
@@ -93,25 +92,30 @@ func Run(ex e.Example) {
 
 	go func() {
 		defer wg.Done()
+		public_ints := []t.T{}
 		for {
 			v, ok := <-cc.P_OUT
 			if !ok {
+				fmt.Println("Publics:", public_ints)
 				return
 			}
+			public_ints = append(public_ints, v)
 
-			fmt.Println("Public:", v)
 		}
 	}()
 
 	go func() {
+		secret_ints := []t.T{}
 		defer wg.Done()
+
 		for {
 			v, ok := <-cc.S_OUT
 			if !ok {
+				fmt.Println("Secrets:", secret_ints)
 				return
 			}
+			secret_ints = append(secret_ints, v)
 
-			fmt.Println("Secret:", v)
 		}
 	}()
 
@@ -120,8 +124,5 @@ func Run(ex e.Example) {
 }
 
 func main() {
-	start := time.Now()
-	Run(e.ZUU())
-	fmt.Println(time.Now().Sub(start).Nanoseconds())
-
+	Run(e.FOO())
 }
