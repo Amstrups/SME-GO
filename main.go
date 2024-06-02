@@ -213,15 +213,18 @@ func foo_inputs(sIn, _ lvChan) {
 }
 
 func baa(ins ReadChannels, outs WriteChannels) {
-	x := <-ins[SECRET]
-	fmt.Println(x)
+	sin := <-ins[SECRET]
+	pin := <-ins[PUBLIC]
+	sout := sin + pin
+	pout := sin * pin
+	fmt.Println(sin, pin)
 
-	outs[PUBLIC] <- x
-	outs[SECRET] <- x
+	outs[PUBLIC] <- pout
+	outs[SECRET] <- sout
 }
 
 func baa_inputs(sIn, pIn lvChan) {
 	fmt.Println("writing 12 to sec")
+	pIn <- 20
 	sIn <- 12
-	pIn <- 10
 }
