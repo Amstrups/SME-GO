@@ -1,6 +1,8 @@
 package types
 
-import "sync"
+import (
+	"sync"
+)
 
 // ChannelCluster
 type ChannelCluster struct {

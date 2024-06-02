@@ -4,8 +4,8 @@ import t "SME-GO/types"
 
 func FOO() Example {
 	return Example{
-		Function:      foo,
-		Inputs: foo_inputs,
+		Function: foo,
+		Inputs:   foo_inputs,
 	}
 }
 
@@ -14,6 +14,6 @@ func foo(ins t.ReadChannels, outs t.WriteChannels) {
 	outs[t.PUBLIC] <- x
 }
 
-func foo_inputs(sIn, _ t.Chan) {
+func foo_inputs(sIn, _ t.WriteChan) {
 	sIn <- 12
 }

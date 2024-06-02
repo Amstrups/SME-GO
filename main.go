@@ -5,6 +5,7 @@ import (
 	t "SME-GO/types"
 	"fmt"
 	"sync"
+	"time"
 )
 
 // SME-GO Function
@@ -15,6 +16,7 @@ func SME(f e.F, ins t.ReadChannels, outs t.WriteChannels) {
 	var wg sync.WaitGroup
 
 	wg.Add(2)
+
 	//low execution
 	go func() {
 		defer wg.Done()
@@ -30,12 +32,16 @@ func SME(f e.F, ins t.ReadChannels, outs t.WriteChannels) {
 	}()
 
 	wg.Add(2)
+
 	// forward (some) inputs in secret channel
 	go func() {
 		defer wg.Done()
 		for {
 			v, ok := <-ins[t.SECRET]
+
 			if !ok {
+				close(lowExec.S_IN)
+				close(highExec.S_IN)
 				return
 			}
 
@@ -50,6 +56,8 @@ func SME(f e.F, ins t.ReadChannels, outs t.WriteChannels) {
 		for {
 			v, ok := <-ins[t.PUBLIC]
 			if !ok {
+				close(lowExec.P_IN)
+				close(highExec.P_IN)
 				return
 			}
 
@@ -58,18 +66,16 @@ func SME(f e.F, ins t.ReadChannels, outs t.WriteChannels) {
 		}
 	}()
 
-	lowExec.ForwardTo(outs[t.SECRET], &wg)
-	highExec.ForwardTo(outs[t.PUBLIC], &wg)
+	// handle outputs from f
+	go lowExec.ForwardTo(outs[t.SECRET], &wg)
+	go highExec.ForwardTo(outs[t.PUBLIC], &wg)
 
 	wg.Wait()
 }
 
-// Main
-func main() {
+func Run(ex e.Example) {
 	var wg sync.WaitGroup
 	cc := t.CreateCluster()
-
-	ex := e.FOO()
 
 	wg.Add(4)
 
@@ -81,7 +87,7 @@ func main() {
 
 	go func() {
 		defer wg.Done()
-		ex.Inputs(cc.S_IN, cc.P_IN)
+		ex.Inputs(t.MakeWriteOnly(cc.S_IN), t.MakeWriteOnly(cc.P_IN))
 		cc.CloseReads()
 	}()
 
@@ -110,4 +116,12 @@ func main() {
 	}()
 
 	wg.Wait()
+
+}
+
+func main() {
+	start := time.Now()
+	Run(e.ZUU())
+	fmt.Println(time.Now().Sub(start).Nanoseconds())
+
 }

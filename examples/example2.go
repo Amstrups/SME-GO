@@ -7,8 +7,8 @@ import (
 
 func BAA() Example {
 	return Example{
-		Function:      baa,
-		Inputs: baa_inputs,
+		Function: baa,
+		Inputs:   baa_inputs,
 	}
 }
 
@@ -22,7 +22,7 @@ func baa(ins t.ReadChannels, outs t.WriteChannels) {
 	outs[t.SECRET] <- sout
 }
 
-func baa_inputs(sIn, pIn t.Chan) {
+func baa_inputs(sIn, pIn t.WriteChan) {
 	fmt.Println("writing 12 to sec")
 	pIn <- 20
 	sIn <- 12
