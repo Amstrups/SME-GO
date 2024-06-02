@@ -2,7 +2,6 @@ package examples
 
 import (
 	t "SME-GO/types"
-	"fmt"
 )
 
 func BAA() Example {
@@ -23,7 +22,6 @@ func baa(ins t.ReadChannels, outs t.WriteChannels) {
 }
 
 func baa_inputs(sIn, pIn t.WriteChan) {
-	fmt.Println("writing 12 to sec")
-	pIn <- 20
 	sIn <- 12
+	pIn <- 20
 }

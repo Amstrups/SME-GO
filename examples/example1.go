@@ -2,7 +2,6 @@ package examples
 
 import (
 	t "SME-GO/types"
-	"fmt"
 )
 
 func FOO() Example {
@@ -20,7 +19,6 @@ func foo(ins t.ReadChannels, outs t.WriteChannels) {
 }
 
 func foo_inputs(sIn, pIn t.WriteChan) {
-	fmt.Println("Inputting 12 on secret")
 	sIn <- 12
 	pIn <- 11
 }
